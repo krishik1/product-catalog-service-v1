@@ -8,10 +8,10 @@ import lombok.Setter;
 @Setter
 @Builder
 public class FakeStoreProductDto {
-    Long id;
-    String title;
-    Double price;
-    String description;
-    String image;
-    String category;
+    private Long id;
+    private String title;
+    private Double price;
+    private String description;
+    private String image;
+    private String category;
 }

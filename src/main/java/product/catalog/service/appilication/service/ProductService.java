@@ -6,7 +6,7 @@ import product.catalog.service.appilication.model.Product;
 import java.util.List;
 
 public interface ProductService {
-    List<ProductDto> getProducts();
+    List<Product> getProducts();
 
     Product getProductById(Long productId);
 

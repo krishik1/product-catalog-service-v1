@@ -11,6 +11,7 @@ import product.catalog.service.appilication.service.ProductService;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @AllArgsConstructor
@@ -18,8 +19,24 @@ import java.util.Optional;
 public class ProductController {
     private ProductService productService;
     @GetMapping("/products")
-    public List<ProductDto> getProducts() {
-        return null;
+    public ResponseEntity<List<ProductDto>> getProducts() {
+        List<Product> productList = productService.getProducts();
+        List<ProductDto> productDtoList = fromList(productList);
+        return ResponseEntity.ok(productDtoList);
+    }
+
+    private List<ProductDto> fromList(List<Product> productList) {
+        return productList.stream().map(prod -> ProductDto.builder().id(prod.getId())
+                .name(prod.getName())
+                .price(prod.getPrice())
+                .imageUrl(prod.getImageUrl())
+                .description(prod.getDescription())
+                .category(Optional.ofNullable(prod.getCategory())
+                        .map(cat -> CategoryDto.builder().id(cat.getId())
+                                .name(cat.getName())
+                                .description(cat.getDescription())
+                                .build()).orElse(null))
+                .build()).collect(Collectors.toList());
     }
 
     @GetMapping("/products/{id}")

@@ -2,15 +2,16 @@ package product.catalog.service.appilication.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import product.catalog.service.appilication.DTO.FakeStoreProductDto;
-import product.catalog.service.appilication.DTO.ProductDto;
 import product.catalog.service.appilication.model.Category;
 import product.catalog.service.appilication.model.Product;
-
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService{
@@ -18,8 +19,25 @@ public class ProductServiceImpl implements ProductService{
     private RestTemplateBuilder restTemplateBuilder;
 
     @Override
-    public List<ProductDto> getProducts() {
-        return List.of();
+    public List<Product> getProducts() {
+        RestTemplate restTemplate = restTemplateBuilder.build();
+        FakeStoreProductDto[]  fakeStoreProductArray = restTemplate.getForEntity("http://fakestoreapi.com/products", FakeStoreProductDto[].class).getBody();
+        List<FakeStoreProductDto> fakeStoreProductDtoList = Arrays.stream(fakeStoreProductArray
+        ).collect(Collectors.toList());
+        return fromList(fakeStoreProductDtoList);
+    }
+
+    private List<Product> fromList(List<FakeStoreProductDto> fakeStoreProductDtoList) {
+        return fakeStoreProductDtoList.stream().map(prod ->
+                Product.builder().id(prod.getId()).name(prod.getTitle()).
+                        price(prod.getPrice()).description(prod.getDescription())
+                        .imageUrl(prod.getImage()).category(
+                                Optional.ofNullable(
+                                                prod.getCategory())
+                                        .map(catName -> Category.builder().name(catName).build()
+                                        ).orElse(null)
+                        ).build()
+        ).collect(Collectors.toList());
     }
 
     @Override
