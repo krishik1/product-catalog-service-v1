@@ -6,9 +6,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import product.catalog.service.appilication.DTO.CategoryDto;
 import product.catalog.service.appilication.DTO.ProductDto;
+import product.catalog.service.appilication.model.Category;
 import product.catalog.service.appilication.model.Product;
 import product.catalog.service.appilication.service.ProductService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -21,11 +23,14 @@ public class ProductController {
     @GetMapping("/products")
     public ResponseEntity<List<ProductDto>> getProducts() {
         List<Product> productList = productService.getProducts();
-        List<ProductDto> productDtoList = fromList(productList);
+        List<ProductDto> productDtoList = new ArrayList<>();
+        for(Product product:productList) {
+            productDtoList.add(from(product));
+        }
         return ResponseEntity.ok(productDtoList);
     }
 
-    private List<ProductDto> fromList(List<Product> productList) {
+    /** private List<ProductDto> fromList(List<Product> productList) {
         return productList.stream().map(prod -> ProductDto.builder().id(prod.getId())
                 .name(prod.getName())
                 .price(prod.getPrice())
@@ -37,7 +42,7 @@ public class ProductController {
                                 .description(cat.getDescription())
                                 .build()).orElse(null))
                 .build()).collect(Collectors.toList());
-    }
+    } **/
 
     @GetMapping("/products/{id}")
     public ResponseEntity<ProductDto> getProductById(@PathVariable("id") Long productId) {
@@ -62,7 +67,24 @@ public class ProductController {
     }
 
     @PostMapping("/products")
-    public ProductDto createProduct(@RequestBody ProductDto productDto) {
-        return productDto;
+    public ResponseEntity<ProductDto> createProduct(@RequestBody ProductDto productDto) {
+        Product product= toProduct(productDto);
+        Product respProduct = productService.createProduct(product);
+        return ResponseEntity.ok(from(respProduct));
+    }
+
+    @PutMapping("/products/{id}")
+    public ResponseEntity<ProductDto> replaceProduct(@PathVariable("id") Long productId,@RequestBody ProductDto productDto) {
+        Product product= toProduct(productDto);
+        Product respProduct = productService.replaceProduct(productId,product);
+        return ResponseEntity.ok(from(respProduct));
+    }
+
+    private Product toProduct(ProductDto productDto) {
+        CategoryDto cat = productDto.getCategory();
+        return Product.builder().id(productDto.getId()).name(productDto.getName()).price(productDto.getPrice())
+                .imageUrl(productDto.getImageUrl()).description(productDto.getDescription())
+                .category(Category.builder().id(cat.getId()).name(cat.getName())
+                        .description(cat.getDescription()).build()).build();
     }
 }

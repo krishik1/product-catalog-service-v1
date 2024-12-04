@@ -1,33 +1,35 @@
 package product.catalog.service.appilication.service;
-
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import product.catalog.service.appilication.DTO.FakeStoreProductDto;
+import product.catalog.service.appilication.client.ProductServiceClientI;
 import product.catalog.service.appilication.model.Category;
 import product.catalog.service.appilication.model.Product;
-import java.util.Arrays;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 public class ProductServiceImpl implements ProductService{
-    @Autowired
-    private RestTemplateBuilder restTemplateBuilder;
+
+    private ProductServiceClientI productServiceClient;
 
     @Override
     public List<Product> getProducts() {
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        FakeStoreProductDto[]  fakeStoreProductArray = restTemplate.getForEntity("http://fakestoreapi.com/products", FakeStoreProductDto[].class).getBody();
-        List<FakeStoreProductDto> fakeStoreProductDtoList = Arrays.stream(fakeStoreProductArray
-        ).collect(Collectors.toList());
-        return fromList(fakeStoreProductDtoList);
+        List<Product> products = new ArrayList<>();
+        List<FakeStoreProductDto> fakeStoreProductDtoList = productServiceClient.getProducts();
+        for(FakeStoreProductDto fakeStoreProductDto : fakeStoreProductDtoList) {
+            products.add(from(fakeStoreProductDto));
+        }
+        return products;
     }
 
-    private List<Product> fromList(List<FakeStoreProductDto> fakeStoreProductDtoList) {
+    /** private List<Product> fromList(List<FakeStoreProductDto> fakeStoreProductDtoList) {
+
         return fakeStoreProductDtoList.stream().map(prod ->
                 Product.builder().id(prod.getId()).name(prod.getTitle()).
                         price(prod.getPrice()).description(prod.getDescription())
@@ -38,12 +40,11 @@ public class ProductServiceImpl implements ProductService{
                                         ).orElse(null)
                         ).build()
         ).collect(Collectors.toList());
-    }
+    } **/
 
     @Override
     public Product getProductById(Long productId) {
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        FakeStoreProductDto fakestoreDto = restTemplate.getForEntity("http://fakestoreapi.com/products/{productId}", FakeStoreProductDto.class, productId).getBody();
+        FakeStoreProductDto fakestoreDto = productServiceClient.getProductById(productId);
         return from(fakestoreDto);
     }
 
@@ -56,6 +57,19 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     public Product createProduct(Product product) {
-        return null;
+        FakeStoreProductDto fakestoreDtoToAdd = toFakeStoreProductDto(product);
+        FakeStoreProductDto fakestoreDto = productServiceClient.addProduct(fakestoreDtoToAdd);
+        return from(fakestoreDto);
+    }
+
+    @Override
+    public Product replaceProduct(Long productId, Product product) {
+        FakeStoreProductDto fakestoreDtoToReplace = toFakeStoreProductDto(product);
+        FakeStoreProductDto fakestoreDto = productServiceClient.replaceProduct(productId,fakestoreDtoToReplace);
+        return from(fakestoreDto);
+    }
+
+    private FakeStoreProductDto toFakeStoreProductDto(Product product) {
+        return FakeStoreProductDto.builder().id(product.getId()).title(product.getName()).price(product.getPrice()).image(product.getImageUrl()).category(product.getCategory().getName()).build();
     }
 }
