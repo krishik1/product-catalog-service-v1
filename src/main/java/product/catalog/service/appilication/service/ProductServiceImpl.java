@@ -1,7 +1,5 @@
 package product.catalog.service.appilication.service;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
 import product.catalog.service.appilication.DTO.FakeStoreProductDto;
 import product.catalog.service.appilication.client.ProductServiceClientI;
@@ -12,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Service
+@Service("fakestore_ProductService")
 @AllArgsConstructor
 public class ProductServiceImpl implements ProductService{
 
