@@ -1,7 +1,5 @@
 package product.catalog.service.appilication.controller;
 
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,11 +9,12 @@ import product.catalog.service.appilication.DTO.ProductDto;
 import product.catalog.service.appilication.model.Category;
 import product.catalog.service.appilication.model.Product;
 import product.catalog.service.appilication.service.ProductService;
+import product.catalog.service.appilication.util.ProductCatalogUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
 
 @RestController
 @RequestMapping("/v1/cape-stone")
@@ -30,7 +29,7 @@ public class ProductController {
         List<Product> productList = productService.getProducts();
         List<ProductDto> productDtoList = new ArrayList<>();
         for(Product product:productList) {
-            productDtoList.add(from(product));
+            productDtoList.add(ProductCatalogUtil.toProductDto(product));
         }
         return ResponseEntity.ok(productDtoList);
     }
@@ -56,33 +55,27 @@ public class ProductController {
                 throw new IllegalArgumentException("productId is invalid");
             }
             Product product = productService.getProductById(productId);
-            ProductDto productDto = from(product);
+            ProductDto productDto = ProductCatalogUtil.toProductDto(product);
             return ResponseEntity.ok(productDto);
         }catch (IllegalArgumentException exception) {
             return new ResponseEntity<>(null,HttpStatus.BAD_REQUEST);
         }
     }
 
-    private ProductDto from(Product product) {
-        CategoryDto categoryDto = Optional.ofNullable(product.getCategory()).map(category ->
-                CategoryDto.builder().id(category.getId()).name(category.getName()).description(category.getDescription()).build()).orElse(null);
-        return ProductDto.builder().id(product.getId()).name(product.getName())
-                .price(product.getPrice()).description(product.getDescription())
-                .imageUrl(product.getImageUrl()).category(categoryDto).build();
-    }
+
 
     @PostMapping("/products")
     public ResponseEntity<ProductDto> createProduct(@RequestBody ProductDto productDto) {
         Product product= toProduct(productDto);
         Product respProduct = productService.createProduct(product);
-        return ResponseEntity.ok(from(respProduct));
+        return ResponseEntity.ok(ProductCatalogUtil.toProductDto(respProduct));
     }
 
     @PutMapping("/products/{id}")
     public ResponseEntity<ProductDto> replaceProduct(@PathVariable("id") Long productId,@RequestBody ProductDto productDto) {
         Product product= toProduct(productDto);
         Product respProduct = productService.replaceProduct(productId,product);
-        return ResponseEntity.ok(from(respProduct));
+        return ResponseEntity.ok(ProductCatalogUtil.toProductDto(respProduct));
     }
 
     private Product toProduct(ProductDto productDto) {
@@ -91,5 +84,21 @@ public class ProductController {
                 .imageUrl(productDto.getImageUrl()).description(productDto.getDescription())
                 .category(Category.builder().id(cat.getId()).name(cat.getName())
                         .description(cat.getDescription()).build()).build();
+    }
+
+    @PostMapping("/productsList")
+    public ResponseEntity<List<ProductDto>> addProducts(@RequestBody List<ProductDto> productDtos) {
+        List<Product> products = new ArrayList<>();
+        for(ProductDto productDto:productDtos) {
+            Product product= toProduct(productDto);
+            products.add(product);
+        }
+        List<Product> productList = productService.addProducts(products);
+        List<ProductDto> respProducts = new ArrayList<>();
+        for(Product product:productList) {
+            ProductDto productDto = ProductCatalogUtil.toProductDto(product);
+            respProducts.add(productDto);
+        }
+        return ResponseEntity.ok(respProducts);
     }
 }

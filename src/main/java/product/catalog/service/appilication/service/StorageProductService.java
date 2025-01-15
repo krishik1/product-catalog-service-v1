@@ -30,4 +30,9 @@ public class StorageProductService implements ProductService{
     public Product replaceProduct(Long productId, Product product) {
         return null;
     }
+
+    @Override
+    public List<Product> addProducts(List<Product> products) {
+        return productRepo.saveAll(products);
+    }
 }

@@ -67,6 +67,12 @@ public class ProductServiceImpl implements ProductService{
         return from(fakestoreDto);
     }
 
+    @Override
+    public List<Product> addProducts(List<Product> products) {
+
+        return List.of();
+    }
+
     private FakeStoreProductDto toFakeStoreProductDto(Product product) {
         return FakeStoreProductDto.builder().id(product.getId()).title(product.getName()).price(product.getPrice()).image(product.getImageUrl()).category(product.getCategory().getName()).build();
     }
